@@ -1,87 +1,127 @@
 <template>
-  <v-row justify="center" align="center">
-    <v-col cols="12" sm="8" md="6">
-      <v-card class="logo py-4 d-flex justify-center">
-        <NuxtLogo />
-        <VuetifyLogo />
-      </v-card>
-      <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
-        </v-card-title>
-        <v-card-text>
-          <p>
-            Vuetify is a progressive Material Design component framework for
-            Vue.js. It was designed to empower developers to create amazing
-            applications.
-          </p>
-          <p>
-            For more information on Vuetify, check out the
-            <a
-              href="https://vuetifyjs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              documentation </a
-            >.
-          </p>
-          <p>
-            If you have questions, please join the official
-            <a
-              href="https://chat.vuetifyjs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="chat"
-            >
-              discord </a
-            >.
-          </p>
-          <p>
-            Find a bug? Report it on the github
-            <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="contribute"
-            >
-              issue board </a
-            >.
-          </p>
-          <p>
-            Thank you for developing with Vuetify and I look forward to bringing
-            more exciting features in the future.
-          </p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3" />
-          <a
-            href="https://nuxtjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt Documentation
-          </a>
-          <br />
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt GitHub
-          </a>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" nuxt to="/inspire"> Continue </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-col>
-  </v-row>
+	<div>
+		<div v-if="user">
+			<v-card class="navbar-container">
+				<v-card-title>
+					Welcome &nbsp;<span class="primary--text font-weight-bold"
+						>{{ user.username }}
+					</span>
+				</v-card-title>
+			</v-card>
+			<div class="d-flex">
+				<v-card class="sidebar-container">
+					<v-list class="pa-0">
+						<v-list-item-group v-model="selectedItem" color="primary">
+							<v-list-item v-for="(item, i) in items" :key="i">
+								<v-list-item-icon>
+									<v-icon v-text="item.icon"></v-icon>
+								</v-list-item-icon>
+								<v-list-item-content>
+									<v-list-item-title
+										v-text="item.text"
+									></v-list-item-title>
+								</v-list-item-content>
+							</v-list-item>
+						</v-list-item-group>
+					</v-list>
+				</v-card>
+				<div class="chat-area-container">
+					<div v-if="selectedItem === null" class="start-msg">
+						<p class="headline">Select a chat to start messaging!</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="loader" v-else>
+			<v-progress-circular
+				indeterminate
+				color="primary"
+				size="100"
+			></v-progress-circular>
+		</div>
+	</div>
 </template>
 
 <script>
+import Cookies from 'js-cookie'
+
 export default {
-  name: 'IndexPage',
+	data() {
+		return {
+			user: null,
+			selectedItem: null,
+			items: [
+				{ text: 'Real-Time', icon: 'mdi-clock' },
+				{ text: 'Real-Time', icon: 'mdi-clock' },
+				{ text: 'Real-Time', icon: 'mdi-clock' },
+			],
+		}
+	},
+	mounted() {
+		const token = Cookies.get('user_token')
+
+		if (token) {
+			this.$axios.defaults.headers.common[
+				'Authorization'
+			] = `Bearer ${token}`
+		} else {
+			this.$router.push('/login')
+		}
+
+		this.$axios({
+			method: 'GET',
+			url: '/user',
+		})
+			.then(({ data }) => (this.user = data.data.user))
+			.catch(() => this.$router.push('/login'))
+	},
 }
 </script>
+
+<style scoped lang="scss">
+.home-container {
+	height: 100vh;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.loader {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%) translateY(-50%);
+}
+
+.navbar-container {
+	z-index: 2;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+.sidebar-container {
+	padding-top: 65px;
+	z-index: 1;
+	position: relative;
+	max-width: 300px;
+	width: 300px;
+	height: 100vh;
+}
+
+.chat-area-container {
+	width: 100%;
+	height: 100vh;
+	padding: 5px;
+	padding-top: 65px;
+}
+
+.start-msg {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+</style>

@@ -1,0 +1,23 @@
+.custom-tabs {
+  .custom-tab {
+    border: 1px solid #eeeeee;
+    padding: 7px;
+    border-radius: $main-border-radius;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    &.active {
+      border-color: $primary-color;
+      color: $primary-color;
+    }
+
+    .tab-title {
+      font-weight: 700;
+    }
+
+    .custom-caption {
+      font-size: .7em;
+    }
+  }
+}
