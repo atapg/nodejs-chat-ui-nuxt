@@ -49,15 +49,26 @@
 						<p class="headline">Select a chat to start messaging!</p>
 					</div>
 					<div v-else class="chat-container">
+						<div class="go-bottom"></div>
 						<!--MESSAGES ARE HEREEEEEE-->
 						<div class="chats-area-container" ref="chatScrollableArea">
 							<div
-								class="msg-area-container"
+								:class="`msg-area-container ${
+									msg.from._id === user._id ? 'pb-0 pt-1' : ''
+								}`"
 								v-for="msg in currentChats"
 								:key="msg._id"
 							>
-								<div class="msg-container d-flex align-center">
-									<v-btn icon class="mr-2">
+								<div
+									:class="`msg-container d-flex align-center  ${
+										msg.from._id === user._id ? 'show-on-right' : ''
+									}`"
+								>
+									<v-btn
+										icon
+										class="mr-2"
+										v-if="msg.from._id !== user._id"
+									>
 										<v-icon>mdi-account</v-icon>
 									</v-btn>
 									<p
@@ -263,9 +274,10 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
+	justify-content: flex-end;
 
 	.msg-area-container {
-		flex: 1;
+		//flex: 1;
 		padding: 10px;
 	}
 
@@ -277,9 +289,19 @@ export default {
 }
 
 .chats-area-container {
-	height: 100%;
-	overflow: scroll;
+	//height: 100%;
+	overflow: auto;
 	overflow-x: hidden;
+	padding: 20px;
+	padding-bottom: 0;
+	padding-top: 0;
+}
+
+.go-bottom {
+	//flex: 1;
+}
+
+.msg-area-container {
 }
 
 .msg-container {
@@ -290,5 +312,8 @@ export default {
 		border-radius: 5px;
 		background-color: $grey;
 	}
+}
+.show-on-right {
+	justify-content: flex-end;
 }
 </style>
