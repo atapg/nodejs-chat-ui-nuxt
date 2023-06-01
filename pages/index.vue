@@ -49,8 +49,27 @@
 						<p class="headline">Select a chat to start messaging!</p>
 					</div>
 					<div v-else class="chat-container">
-						<!--            MESSAGES ARE HEREEEEEE-->
-						<div class="msg-area-container"></div>
+						<!--MESSAGES ARE HEREEEEEE-->
+						<div class="chats-area-container" ref="chatScrollableArea">
+							<div
+								class="msg-area-container"
+								v-for="msg in currentChats"
+								:key="msg._id"
+							>
+								<div class="msg-container d-flex align-center">
+									<v-btn icon class="mr-2">
+										<v-icon>mdi-account</v-icon>
+									</v-btn>
+									<p
+										:class="`mb-0 msg-box ${
+											msg.from._id === user._id ? 'primary' : ''
+										}`"
+									>
+										{{ msg.content }}
+									</p>
+								</div>
+							</div>
+						</div>
 						<v-form @submit.prevent="sendMsg" class="msg-box-container">
 							<v-text-field
 								outlined
@@ -66,6 +85,7 @@
 								icon
 								type="submit"
 								x-large
+								:disabled="!message"
 							>
 								<v-icon>mdi-send</v-icon>
 							</v-btn>
@@ -97,11 +117,13 @@ export default {
 			chats: [],
 			socket: null,
 			message: null,
+			messages: [],
+			currentChats: [],
 		}
 	},
 	mounted() {
 		this.socket = io('ws://localhost:3001')
-
+		//TODO add header for socket
 		const token = Cookies.get('user_token')
 
 		if (token) {
@@ -130,7 +152,15 @@ export default {
 			})
 			.catch(() => this.$router.push('/login'))
 
-		this.socket.on('msg', data => console.log(data))
+		this.socket.on('msg', data => {
+			this.currentChats.push(data)
+
+			// Niceeeee wait for v-for to finish then run this func!!!!!!
+			this.$nextTick(() => {
+				this.$refs.chatScrollableArea.scrollTop =
+					this.$refs.chatScrollableArea.scrollHeight
+			})
+		})
 	},
 	methods: {
 		joinRoom(roomId) {
@@ -138,16 +168,45 @@ export default {
 				_id: this.user._id,
 				room: roomId,
 			})
+
+			this.getChatMessages(roomId, 1)
 		},
 		sendMsg() {
-			const room = this.chats[this.selectedItem]._id
-
-			console.log(this.message + 'to: ' + room)
-
 			// do socket things then
+			this.socket.emit('msg', {
+				room: this.chats[this.selectedItem]._id,
+				msg: this.message,
+				_id: this.user._id,
+			})
 
 			// clear message
 			this.message = null
+		},
+		getChatMessages(roomId, page = 1) {
+			this.$axios({
+				method: 'GET',
+				url: `/chat/messages/${roomId}?page=${page}`,
+			})
+				.then(({ data }) => {
+					// make condition for first fetch
+
+					this.messages.push({
+						roomId,
+						messages: data.data.reverse(),
+						firstFetch: true,
+					})
+
+					this.currentChats = this.messages.filter(
+						c => c.roomId === this.chats[this.selectedItem]._id,
+					)[0].messages
+
+					// Niceeeee wait for v-for to finish then run this func!!!!!!
+					this.$nextTick(() => {
+						this.$refs.chatScrollableArea.scrollTop =
+							this.$refs.chatScrollableArea.scrollHeight
+					})
+				})
+				.catch(e => {})
 		},
 	},
 }
@@ -214,6 +273,22 @@ export default {
 		display: flex;
 		padding: 10px;
 		align-items: center;
+	}
+}
+
+.chats-area-container {
+	height: 100%;
+	overflow: scroll;
+	overflow-x: hidden;
+}
+
+.msg-container {
+	.msg-box {
+		padding: 5px;
+		padding-left: 15px;
+		padding-right: 15px;
+		border-radius: 5px;
+		background-color: $grey;
 	}
 }
 </style>
