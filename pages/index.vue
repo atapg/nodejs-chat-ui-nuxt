@@ -23,7 +23,11 @@
 				<v-card class="sidebar-container">
 					<v-list class="pa-0">
 						<v-list-item-group v-model="selectedItem" color="primary">
-							<v-list-item v-for="(item, i) in chats" :key="i">
+							<v-list-item
+								v-for="(item, i) in chats"
+								:key="i"
+								@click="joinRoom(item._id)"
+							>
 								<v-list-item-icon>
 									<v-icon>{{
 										item.type === 'private'
@@ -44,6 +48,29 @@
 					<div v-if="selectedItem === null" class="start-msg">
 						<p class="headline">Select a chat to start messaging!</p>
 					</div>
+					<div v-else class="chat-container">
+						<!--            MESSAGES ARE HEREEEEEE-->
+						<div class="msg-area-container"></div>
+						<v-form @submit.prevent="sendMsg" class="msg-box-container">
+							<v-text-field
+								outlined
+								label="Type a message..."
+								dense
+								class="msg-box"
+								hide-details
+								v-model="message"
+							></v-text-field>
+							<v-btn
+								color="primary"
+								class="send-btn"
+								icon
+								type="submit"
+								x-large
+							>
+								<v-icon>mdi-send</v-icon>
+							</v-btn>
+						</v-form>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -59,6 +86,7 @@
 
 <script>
 import Cookies from 'js-cookie'
+import { io } from 'socket.io-client'
 
 export default {
 	data() {
@@ -67,9 +95,13 @@ export default {
 			selectedItem: null,
 			search: null,
 			chats: [],
+			socket: null,
+			message: null,
 		}
 	},
 	mounted() {
+		this.socket = io('ws://localhost:3001')
+
 		const token = Cookies.get('user_token')
 
 		if (token) {
@@ -97,6 +129,26 @@ export default {
 				// .catch(() => this.$router.push('/login'))
 			})
 			.catch(() => this.$router.push('/login'))
+
+		this.socket.on('msg', data => console.log(data))
+	},
+	methods: {
+		joinRoom(roomId) {
+			this.socket.emit('joinRoom', {
+				_id: this.user._id,
+				room: roomId,
+			})
+		},
+		sendMsg() {
+			const room = this.chats[this.selectedItem]._id
+
+			console.log(this.message + 'to: ' + room)
+
+			// do socket things then
+
+			// clear message
+			this.message = null
+		},
 	},
 }
 </script>
@@ -146,5 +198,22 @@ export default {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
+}
+
+.chat-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+
+	.msg-area-container {
+		flex: 1;
+		padding: 10px;
+	}
+
+	.msg-box-container {
+		display: flex;
+		padding: 10px;
+		align-items: center;
+	}
 }
 </style>
