@@ -175,6 +175,7 @@ export default {
 			message: null,
 			messages: [],
 			currentChats: [],
+			chatLoading: false,
 		}
 	},
 	mounted() {
@@ -225,7 +226,7 @@ export default {
 				room: roomId,
 			})
 
-			this.getChatMessages(roomId, 1)
+			// this.getChatMessages(roomId, 1)
 		},
 		sendMsg() {
 			// do socket things then
@@ -263,6 +264,25 @@ export default {
 					})
 				})
 				.catch(e => {})
+		},
+	},
+	watch: {
+		selectedItem() {
+			if (this.selectedItem !== undefined) {
+				const roomId = this.chats[this.selectedItem]._id
+
+				if (this.messages.filter(c => c.roomId === roomId).length <= 0) {
+					this.getChatMessages(roomId)
+				} else {
+					if (this.messages.filter(c => c.roomId === roomId)[0]) {
+						this.currentChats = this.messages.filter(
+							c => c.roomId === this.chats[this.selectedItem]._id,
+						)[0].messages
+					} else {
+						this.getChatMessages(roomId)
+					}
+				}
+			}
 		},
 	},
 }
