@@ -71,21 +71,23 @@
 										msg.from._id === user._id ? 'show-on-right' : ''
 									}`"
 								>
-									<v-btn
-										icon
-										:class="`mr-2`"
-										v-if="
-											msg.from._id !== user._id && index > 0
-												? msg.from._id ===
-												  currentChats[index - 1].from._id
-													? ''
+									<div v-if="msg.from._id !== user._id">
+										<v-btn
+											icon
+											:class="`mr-2`"
+											v-if="
+												index > 0
+													? msg.from._id ===
+													  currentChats[index - 1].from._id
+														? ''
+														: true
 													: true
-												: null
-										"
-									>
-										<v-icon>mdi-account</v-icon>
-									</v-btn>
-									<p
+											"
+										>
+											<v-icon>mdi-account</v-icon>
+										</v-btn>
+									</div>
+									<div
 										:class="`mb-0 msg-box ${
 											msg.from._id === user._id ? 'primary' : ''
 										} ${
@@ -97,8 +99,11 @@
 												: null
 										}`"
 									>
-										{{ msg.content }}
-									</p>
+										<p>{{ msg.content }}</p>
+										<span class="msg-time">{{
+											new Date(msg.createdAt).toLocaleTimeString()
+										}}</span>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -327,11 +332,27 @@ export default {
 
 .msg-container {
 	.msg-box {
-		padding: 5px;
-		padding-left: 15px;
-		padding-right: 15px;
+		padding: 7px;
+		padding-left: 20px;
+		padding-right: 20px;
 		border-radius: 5px;
 		background-color: $grey;
+		max-width: 400px;
+		min-width: 200px;
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+
+		span {
+			margin-left: 10px;
+			white-space: nowrap;
+		}
+	}
+
+	.msg-time {
+		font-size: 10px;
+		text-align: right;
+		display: block;
 	}
 }
 .show-on-right {
