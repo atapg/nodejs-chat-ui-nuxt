@@ -73,6 +73,7 @@
 								>
 									<div v-if="msg.from._id !== user._id">
 										<v-btn
+											:color="msg.from.avatarColor"
 											icon
 											:class="`mr-2`"
 											v-if="
@@ -87,6 +88,7 @@
 											<v-icon>mdi-account</v-icon>
 										</v-btn>
 									</div>
+
 									<div
 										:class="`mb-0 msg-box ${
 											msg.from._id === user._id ? 'primary' : ''
@@ -99,8 +101,25 @@
 												: null
 										}`"
 									>
-										<p>{{ msg.content }}</p>
-										<span class="msg-time">{{
+										<div>
+											<div v-if="msg.from._id !== user._id">
+												<p
+													v-if="
+														index > 0
+															? msg.from._id ===
+															  currentChats[index - 1].from._id
+																? ''
+																: true
+															: true
+													"
+													class="primary--text font-weight-bold username-text mb-3"
+												>
+													{{ msg.from.username }}
+												</p>
+											</div>
+											<p>{{ msg.content }}</p>
+										</div>
+										<span class="msg-time grey--text">{{
 											new Date(msg.createdAt).toLocaleTimeString()
 										}}</span>
 									</div>
@@ -357,5 +376,11 @@ export default {
 }
 .show-on-right {
 	justify-content: flex-end;
+}
+
+.username-text {
+	cursor: pointer;
+	user-select: none;
+	margin-bottom: 10px;
 }
 </style>
