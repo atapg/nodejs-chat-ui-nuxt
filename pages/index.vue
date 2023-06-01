@@ -55,8 +55,15 @@
 							<div
 								:class="`msg-area-container ${
 									msg.from._id === user._id ? 'pb-0 pt-1' : ''
-								}`"
-								v-for="msg in currentChats"
+								} ${
+									index > 0
+										? msg.from._id ===
+										  currentChats[index - 1].from._id
+											? 'pb-0 pt-1'
+											: ''
+										: null
+								}  `"
+								v-for="(msg, index) in currentChats"
 								:key="msg._id"
 							>
 								<div
@@ -66,14 +73,28 @@
 								>
 									<v-btn
 										icon
-										class="mr-2"
-										v-if="msg.from._id !== user._id"
+										:class="`mr-2`"
+										v-if="
+											msg.from._id !== user._id && index > 0
+												? msg.from._id ===
+												  currentChats[index - 1].from._id
+													? ''
+													: true
+												: null
+										"
 									>
 										<v-icon>mdi-account</v-icon>
 									</v-btn>
 									<p
 										:class="`mb-0 msg-box ${
 											msg.from._id === user._id ? 'primary' : ''
+										} ${
+											index > 0
+												? msg.from._id ===
+												  currentChats[index - 1].from._id
+													? 'ml-11'
+													: true
+												: null
 										}`"
 									>
 										{{ msg.content }}
@@ -278,7 +299,7 @@ export default {
 
 	.msg-area-container {
 		//flex: 1;
-		padding: 10px;
+		padding-top: 25px;
 	}
 
 	.msg-box-container {
