@@ -18,6 +18,9 @@
     "nuxt": "^2.15.8",
     "socket.io-client": "^4.6.2",
     "vue": "^2.7.10",
+    "vue-infinite-loading": "^2.4.5",
+    "vue-infinite-scroll": "^2.0.2",
+    "vue-mugen-scroll": "^0.2.6",
     "vue-server-renderer": "^2.7.10",
     "vue-template-compiler": "^2.7.10",
     "vuetify": "^2.6.10"

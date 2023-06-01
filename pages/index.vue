@@ -48,10 +48,25 @@
 					<div v-if="selectedItem === null" class="start-msg">
 						<p class="headline">Select a chat to start messaging!</p>
 					</div>
+
 					<div v-else class="chat-container">
 						<div class="go-bottom"></div>
 						<!--MESSAGES ARE HEREEEEEE-->
+
 						<div class="chats-area-container" ref="chatScrollableArea">
+							<div
+								class="align-center text-center mb-10"
+								v-if="!fetchingNewChats"
+							>
+								<v-btn
+									color="primary"
+									text
+									small
+									class="align-center"
+									@click="fetchNewChats"
+									>Load More...</v-btn
+								>
+							</div>
 							<div
 								:class="`msg-area-container ${
 									msg.from._id === user._id ? 'pb-0 pt-1' : ''
@@ -126,6 +141,7 @@
 								</div>
 							</div>
 						</div>
+
 						<v-form @submit.prevent="sendMsg" class="msg-box-container">
 							<v-text-field
 								outlined
@@ -165,6 +181,7 @@ import Cookies from 'js-cookie'
 import { io } from 'socket.io-client'
 
 export default {
+	components: {},
 	data() {
 		return {
 			user: null,
@@ -176,6 +193,9 @@ export default {
 			messages: [],
 			currentChats: [],
 			chatLoading: false,
+			hasReachedToTop: false,
+			fetchingNewChats: false,
+			page: 1,
 		}
 	},
 	mounted() {
@@ -220,6 +240,15 @@ export default {
 		})
 	},
 	methods: {
+		fetchNewChats() {
+			this.fetchingNewChats = true
+			this.getChatMessages(
+				this.chats[this.selectedItem]._id,
+				this.messages.filter(
+					m => m.roomId === this.chats[this.selectedItem]._id,
+				)[0].page,
+			)
+		},
 		joinRoom(roomId) {
 			this.socket.emit('joinRoom', {
 				_id: this.user._id,
@@ -247,21 +276,41 @@ export default {
 				.then(({ data }) => {
 					// make condition for first fetch
 
-					this.messages.push({
-						roomId,
-						messages: data.data.reverse(),
-						firstFetch: true,
-					})
+					if (data.data.length === 0) {
+						this.fetchingNewChats = true
+					} else {
+						this.fetchingNewChats = false
+					}
+
+					if (page === 1) {
+						this.messages.push({
+							roomId,
+							messages: data.data.reverse(),
+							firstFetch: true,
+							page: 1,
+						})
+					} else {
+						data.data.forEach(m => {
+							this.messages
+								.filter(m => m.roomId === roomId)[0]
+								.messages.unshift(m)
+						})
+					}
 
 					this.currentChats = this.messages.filter(
 						c => c.roomId === this.chats[this.selectedItem]._id,
 					)[0].messages
 
 					// Niceeeee wait for v-for to finish then run this func!!!!!!
-					this.$nextTick(() => {
-						this.$refs.chatScrollableArea.scrollTop =
-							this.$refs.chatScrollableArea.scrollHeight
-					})
+					if (page === 1) {
+						this.$nextTick(() => {
+							this.$refs.chatScrollableArea.scrollTop =
+								this.$refs.chatScrollableArea.scrollHeight
+						})
+					}
+
+					this.messages.filter(m => m.roomId === roomId)[0].page =
+						this.messages.filter(m => m.roomId === roomId)[0].page + 1
 				})
 				.catch(e => {})
 		},
@@ -272,14 +321,14 @@ export default {
 				const roomId = this.chats[this.selectedItem]._id
 
 				if (this.messages.filter(c => c.roomId === roomId).length <= 0) {
-					this.getChatMessages(roomId)
+					this.getChatMessages(roomId, 1)
 				} else {
 					if (this.messages.filter(c => c.roomId === roomId)[0]) {
 						this.currentChats = this.messages.filter(
 							c => c.roomId === this.chats[this.selectedItem]._id,
 						)[0].messages
 					} else {
-						this.getChatMessages(roomId)
+						this.getChatMessages(roomId, 1)
 					}
 				}
 			}
