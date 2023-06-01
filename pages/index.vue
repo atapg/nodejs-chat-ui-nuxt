@@ -2,23 +2,38 @@
 	<div>
 		<div v-if="user">
 			<v-card class="navbar-container">
-				<v-card-title>
-					Welcome &nbsp;<span class="primary--text font-weight-bold"
-						>{{ user.username }}
-					</span>
+				<v-card-title class="px-10 d-flex justify-space-between">
+					<div>
+						Welcome &nbsp;<span class="primary--text font-weight-bold"
+							>{{ user.username }}
+						</span>
+					</div>
+					<div class="search-container">
+						<v-text-field
+							outlined
+							label="Search a user..."
+							dense
+							hide-details
+							v-model="search"
+						></v-text-field>
+					</div>
 				</v-card-title>
 			</v-card>
 			<div class="d-flex">
 				<v-card class="sidebar-container">
 					<v-list class="pa-0">
 						<v-list-item-group v-model="selectedItem" color="primary">
-							<v-list-item v-for="(item, i) in items" :key="i">
+							<v-list-item v-for="(item, i) in chats" :key="i">
 								<v-list-item-icon>
-									<v-icon v-text="item.icon"></v-icon>
+									<v-icon>{{
+										item.type === 'private'
+											? 'mdi-account'
+											: 'mdi-account-group'
+									}}</v-icon>
 								</v-list-item-icon>
 								<v-list-item-content>
 									<v-list-item-title
-										v-text="item.text"
+										v-text="item.name"
 									></v-list-item-title>
 								</v-list-item-content>
 							</v-list-item>
@@ -50,11 +65,8 @@ export default {
 		return {
 			user: null,
 			selectedItem: null,
-			items: [
-				{ text: 'Real-Time', icon: 'mdi-clock' },
-				{ text: 'Real-Time', icon: 'mdi-clock' },
-				{ text: 'Real-Time', icon: 'mdi-clock' },
-			],
+			search: null,
+			chats: [],
 		}
 	},
 	mounted() {
@@ -72,7 +84,18 @@ export default {
 			method: 'GET',
 			url: '/user',
 		})
-			.then(({ data }) => (this.user = data.data.user))
+			.then(({ data }) => {
+				this.user = data.data.user
+
+				this.$axios({
+					method: 'GET',
+					url: '/user/chats',
+				}).then(({ data }) => {
+					// get chats
+					this.chats = data.data.chats
+				})
+				// .catch(() => this.$router.push('/login'))
+			})
 			.catch(() => this.$router.push('/login'))
 	},
 }
@@ -103,7 +126,7 @@ export default {
 }
 
 .sidebar-container {
-	padding-top: 65px;
+	padding-top: 75px;
 	z-index: 1;
 	position: relative;
 	max-width: 300px;
@@ -115,7 +138,7 @@ export default {
 	width: 100%;
 	height: 100vh;
 	padding: 5px;
-	padding-top: 65px;
+	padding-top: 75px;
 }
 
 .start-msg {
