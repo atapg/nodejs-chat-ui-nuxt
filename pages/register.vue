@@ -1,9 +1,9 @@
 <template>
 	<div class="login-container">
 		<v-card min-width="700">
-			<v-card-title><p class="">Login</p></v-card-title>
+			<v-card-title><p class="">Register</p></v-card-title>
 			<v-card-text>
-				<v-form @submit.prevent="login">
+				<v-form @submit.prevent="register">
 					<v-text-field
 						outlined
 						label="Username"
@@ -21,7 +21,7 @@
 						color="primary"
 						type="submit"
 						:disabled="!password || !username"
-						>Login</v-btn
+						>Register</v-btn
 					>
 				</v-form>
 			</v-card-text>
@@ -40,23 +40,17 @@ export default {
 		}
 	},
 	methods: {
-		login() {
+		register() {
 			this.$axios({
 				method: 'POST',
 				data: {
 					username: this.username,
 					password: this.password,
 				},
-				url: '/user/login',
+				url: '/user/register',
 			})
 				.then(({ data }) => {
-					Cookies.set('user_token', data.data.token, { expires: 30 })
-
-					this.$axios.defaults.headers.common[
-						'Authorization'
-					] = `Bearer ${data.data.token}`
-
-					this.$router.push('/')
+					this.$router.push('/login')
 				})
 				.catch(err => {
 					alert(err.response.data.message)

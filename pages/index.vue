@@ -350,7 +350,9 @@ export default {
 		})
 	},
 	beforeDestroy() {
-		this.socket.disconnect()
+		if (this.socket) {
+			this.socket.disconnect()
+		}
 	},
 	methods: {
 		fetchNewChats() {
