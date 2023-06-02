@@ -38,13 +38,13 @@
 						</span>
 					</div>
 					<div class="search-container">
-						<v-text-field
-							outlined
-							label="Search a user..."
-							dense
-							hide-details
-							v-model="search"
-						></v-text-field>
+						<!--						<v-text-field-->
+						<!--							outlined-->
+						<!--							label="Search a user..."-->
+						<!--							dense-->
+						<!--							hide-details-->
+						<!--							v-model="search"-->
+						<!--						></v-text-field>-->
 					</div>
 				</v-card-title>
 			</v-card>
@@ -253,7 +253,12 @@
 								</div>
 							</v-list>
 						</div>
-						<v-btn color="primary" type="submit">Create Chat</v-btn>
+						<v-btn
+							color="primary"
+							type="submit"
+							:loading="createChatLoading"
+							>Create Chat</v-btn
+						>
 					</v-form>
 				</v-card-text>
 			</v-card>
@@ -281,12 +286,13 @@ export default {
 			hasReachedToTop: false,
 			fetchingNewChats: false,
 			page: 1,
-			createChatDialog: true,
+			createChatDialog: false,
 			members: [],
 			createChatForm: {
 				members: [],
 				name: null,
 			},
+			createChatLoading: false,
 		}
 	},
 	mounted() {
@@ -309,13 +315,7 @@ export default {
 			.then(({ data }) => {
 				this.user = data.data.user
 
-				this.$axios({
-					method: 'GET',
-					url: '/user/chats',
-				}).then(({ data }) => {
-					// get chats
-					this.chats = data.data.chats
-				})
+				this.getChats()
 				// .catch(() => this.$router.push('/login'))
 			})
 			.catch(() => this.$router.push('/login'))
@@ -349,6 +349,15 @@ export default {
 					m => m.roomId === this.chats[this.selectedItem]._id,
 				)[0].page,
 			)
+		},
+		getChats() {
+			this.$axios({
+				method: 'GET',
+				url: '/user/chats',
+			}).then(({ data }) => {
+				// get chats
+				this.chats = data.data.chats
+			})
 		},
 		joinRoom(roomId) {
 			this.socket.emit('joinRoom', {
@@ -436,7 +445,25 @@ export default {
 			}
 		},
 		createChatHandler() {
-			console.log(this.createChatForm)
+			this.createChatLoading = true
+
+			this.$axios({
+				method: 'POST',
+				url: '/chat',
+				data: {
+					members: this.createChatForm.members,
+					name: this.createChatForm.name,
+				},
+			})
+				.then(({ data }) => {
+					this.getChats()
+					this.createChatForm.members = []
+					this.createChatForm.name = null
+				})
+				.finally(() => {
+					this.createChatDialog = false
+					this.createChatLoading = false
+				})
 		},
 	},
 	watch: {
