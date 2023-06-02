@@ -257,6 +257,10 @@
 							color="primary"
 							type="submit"
 							:loading="createChatLoading"
+							:disabled="
+								!createChatForm.name ||
+								createChatForm.members.length <= 0
+							"
 							>Create Chat</v-btn
 						>
 					</v-form>
@@ -296,7 +300,6 @@ export default {
 		}
 	},
 	mounted() {
-		this.socket = io('ws://localhost:3001')
 		//TODO add header for socket
 		const token = Cookies.get('user_token')
 
@@ -314,21 +317,30 @@ export default {
 		})
 			.then(({ data }) => {
 				this.user = data.data.user
+				this.socket = io('ws://localhost:3001', {
+					query: `_id=${this.user._id}`,
+				})
+
+				this.socket.emit('addSocket', { _id: this.user._id })
+
+				this.socket.on('msg', data => {
+					this.currentChats.push(data)
+
+					// Niceeeee wait for v-for to finish then run this func!!!!!!
+					this.$nextTick(() => {
+						this.$refs.chatScrollableArea.scrollTop =
+							this.$refs.chatScrollableArea.scrollHeight
+					})
+				})
+
+				this.socket.on('chat', () => {
+					this.getChats()
+				})
 
 				this.getChats()
 				// .catch(() => this.$router.push('/login'))
 			})
 			.catch(() => this.$router.push('/login'))
-
-		this.socket.on('msg', data => {
-			this.currentChats.push(data)
-
-			// Niceeeee wait for v-for to finish then run this func!!!!!!
-			this.$nextTick(() => {
-				this.$refs.chatScrollableArea.scrollTop =
-					this.$refs.chatScrollableArea.scrollHeight
-			})
-		})
 
 		this.$axios({
 			method: 'GET',
@@ -519,6 +531,13 @@ export default {
 	max-width: 300px;
 	width: 300px;
 	height: 100vh;
+	overflow: auto;
+	-ms-overflow-style: none; /* Internet Explorer 10+ */
+	scrollbar-width: none; /* Firefox */
+}
+
+.sidebar-container::-webkit-scrollbar {
+	display: none; /* Safari and Chrome */
 }
 
 .chat-area-container {
