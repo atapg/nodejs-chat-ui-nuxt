@@ -4,8 +4,37 @@
 			<v-card class="navbar-container">
 				<v-card-title class="px-10 d-flex justify-space-between">
 					<div>
-						Welcome &nbsp;<span class="primary--text font-weight-bold"
-							>{{ user.username }}
+						&nbsp;<span class="primary--text font-weight-bold">
+							<v-menu offset-y>
+								<template v-slot:activator="{ on, attrs }">
+									<span class="welcome-text"> Welcome</span>
+									<v-btn
+										color="primary"
+										dark
+										v-bind="attrs"
+										v-on="on"
+										text
+									>
+										{{ user.username }}
+									</v-btn>
+								</template>
+								<v-list>
+									<v-list-item link @click="createChatDialog = true">
+										<v-list-item-icon>
+											<v-icon>mdi-plus</v-icon>
+										</v-list-item-icon>
+										<v-list-item-title>
+											Create New Chat
+										</v-list-item-title>
+									</v-list-item>
+									<v-list-item link @click="logout">
+										<v-list-item-icon>
+											<v-icon>mdi-location-exit</v-icon>
+										</v-list-item-icon>
+										<v-list-item-title> Logout </v-list-item-title>
+									</v-list-item>
+								</v-list>
+							</v-menu>
 						</span>
 					</div>
 					<div class="search-container">
@@ -173,6 +202,62 @@
 				size="100"
 			></v-progress-circular>
 		</div>
+		<v-dialog v-model="createChatDialog" width="500">
+			<v-card>
+				<v-card-title>Create new chat</v-card-title>
+				<v-card-text>
+					<v-form @submit.prevent="createChatHandler">
+						<v-text-field
+							outlined
+							label="Chat name"
+							dense
+							v-model="createChatForm.name"
+						></v-text-field>
+						<!--						<v-text-field-->
+						<!--							outlined-->
+						<!--							label="Search members..."-->
+						<!--							dense-->
+						<!--						></v-text-field>-->
+						<span>Members</span>
+						<div class="members-area-container mt-2">
+							<v-list class="pa-0">
+								<div v-for="member in members" :key="member._id">
+									<v-list-item>
+										<v-list-item-icon>
+											<v-icon :color="member.avatarColor">
+												mdi-account
+											</v-icon>
+										</v-list-item-icon>
+										<v-list-item-content>
+											<v-list-item-title>
+												{{ member.username }}
+											</v-list-item-title>
+										</v-list-item-content>
+										<v-list-item-action>
+											<v-btn icon @click="addMember(member._id)">
+												<v-icon
+													color="grey lighten-1"
+													v-if="
+														createChatForm.members.indexOf(
+															member._id,
+														) < 0
+													"
+												>
+													mdi-plus
+												</v-icon>
+												<v-icon v-else> mdi-close </v-icon>
+											</v-btn>
+										</v-list-item-action>
+									</v-list-item>
+									<v-divider></v-divider>
+								</div>
+							</v-list>
+						</div>
+						<v-btn color="primary" type="submit">Create Chat</v-btn>
+					</v-form>
+				</v-card-text>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
@@ -196,6 +281,12 @@ export default {
 			hasReachedToTop: false,
 			fetchingNewChats: false,
 			page: 1,
+			createChatDialog: true,
+			members: [],
+			createChatForm: {
+				members: [],
+				name: null,
+			},
 		}
 	},
 	mounted() {
@@ -238,6 +329,16 @@ export default {
 					this.$refs.chatScrollableArea.scrollHeight
 			})
 		})
+
+		this.$axios({
+			method: 'GET',
+			url: '/chat/members',
+		}).then(({ data }) => {
+			this.members = data.data
+		})
+	},
+	beforeDestroy() {
+		this.socket.disconnect()
 	},
 	methods: {
 		fetchNewChats() {
@@ -313,6 +414,29 @@ export default {
 						this.messages.filter(m => m.roomId === roomId)[0].page + 1
 				})
 				.catch(e => {})
+		},
+		logout() {
+			this.user = null
+			Cookies.remove('user_token')
+			this.$router.push('/login')
+		},
+		addMember(memberId) {
+			const memberAlreadyAdded = this.createChatForm.members.filter(
+				member => member === memberId,
+			)
+
+			if (memberAlreadyAdded.length > 0) {
+				// remove
+				this.createChatForm.members.splice(
+					this.createChatForm.members.indexOf(memberId),
+					1,
+				)
+			} else {
+				this.createChatForm.members.push(memberId)
+			}
+		},
+		createChatHandler() {
+			console.log(this.createChatForm)
 		},
 	},
 	watch: {
@@ -451,5 +575,20 @@ export default {
 	cursor: pointer;
 	user-select: none;
 	margin-bottom: 10px;
+}
+
+.welcome-text {
+	color: rgba(255, 255, 255, 1) !important;
+	font-size: 1rem;
+	margin-right: 10px;
+}
+
+.members-area-container {
+	height: 200px;
+	margin-bottom: 30px;
+	border-radius: 5px;
+	border: 1px rgba(255, 255, 255, 0.24) solid;
+	padding: 10px;
+	overflow: auto;
 }
 </style>
