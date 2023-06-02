@@ -79,7 +79,7 @@
 										: null
 								}  `"
 								v-for="(msg, index) in currentChats"
-								:key="msg._id"
+								:key="index"
 							>
 								<div
 									:class="`msg-container d-flex align-center  ${
@@ -276,7 +276,7 @@ export default {
 				.then(({ data }) => {
 					// make condition for first fetch
 
-					if (data.data.length === 0) {
+					if (data.data.length === 0 || data.data.length < 20) {
 						this.fetchingNewChats = true
 					} else {
 						this.fetchingNewChats = false
